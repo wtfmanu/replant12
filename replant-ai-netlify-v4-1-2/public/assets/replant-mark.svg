@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 82" role="img" aria-labelledby="title">
+  <title id="title">RePlant Symbol</title>
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8da07d"/>
+      <stop offset="1" stop-color="#49664f"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="#123e31" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 25v18c0 8 4 13 11 16v17" stroke-width="5"/>
+    <path d="M32 24v20M39 24v20M46 25v18c0 8-4 13-10 16" stroke-width="5"/>
+  </g>
+  <g fill="url(#leaf)">
+    <path d="M37 20C37 9 43 3 53 1c1 10-3 18-14 23Z"/>
+    <path d="M52 29c4-9 11-12 19-10-2 9-8 14-19 14Z"/>
+    <path d="M23 29C18 21 11 19 4 22c3 9 10 13 20 11Z"/>
+    <path d="M39 57c9-4 16-2 21 5-7 6-14 6-22 0Z"/>
+  </g>
+  <path d="M51 4c-5 7-8 13-12 20M68 21c-7 2-11 5-16 10M7 24c7 2 12 5 17 9M57 63c-7-2-12-1-18 0" fill="none" stroke="#6d8366" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

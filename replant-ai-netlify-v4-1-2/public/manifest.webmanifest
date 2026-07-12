@@ -1,0 +1,13 @@
+{
+  "name": "RePlant – Rezeptwandler",
+  "short_name": "RePlant",
+  "description": "Rezepte vegetarisch oder vegan verwandeln.",
+  "lang": "de",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3ed",
+  "theme_color": "#103d30",
+  "icons": [
+    {"src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
