@@ -1,0 +1,20 @@
+{
+  "name": "replant-grok-netlify",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Moderner vegetarischer und veganer Rezeptwandler für Netlify mit optionaler Grok-AI.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check-project.mjs",
+    "verify": "npm test && npm run check",
+    "dev": "npx --yes netlify-cli@latest dev",
+    "deploy": "npx --yes netlify-cli@latest deploy --build",
+    "deploy:prod": "npx --yes netlify-cli@latest deploy --build --prod",
+    "smoke": "node scripts/ui-smoke-test.mjs"
+  },
+  "license": "UNLICENSED"
+}
