@@ -1,10 +1,10 @@
 const STORAGE = Object.freeze({
-  profiles: "replant.profiles.v3",
-  activeProfile: "replant.activeProfile.v3",
-  history: "replant.history.v3",
-  draft: "replant.draft.v3",
-  aiEnabled: "replant.aiEnabled.v3",
-  reduceMotion: "replant.reduceMotion.v3",
+  profiles: "replant.profiles.v4",
+  activeProfile: "replant.activeProfile.v4",
+  history: "replant.history.v4",
+  draft: "replant.draft.v4",
+  aiEnabled: "replant.aiEnabled.v4",
+  reduceMotion: "replant.reduceMotion.v4",
 });
 
 const MAX_HISTORY = 30;
@@ -43,7 +43,7 @@ Zubereitung
 6. Sofort servieren.`;
 
 const ids = [
-  "aiDialog", "aiMiniText", "aiMiniToggle", "aiQuickButton", "aiQuickLabel", "aiQuickMeta", "aiSettingsButton", "aiSettingsStatus",
+  "aiDialog", "aiInlineToggle", "aiSettingsButton", "aiSettingsStatus",
   "characterCount", "clearHistoryButton", "clearSourceButton", "confirmDialog", "confirmDialogText", "confirmDialogTitle", "conversionStatus",
   "convertButton", "copyButton", "deleteHistoryItemButton", "dietRange", "editProfileButton", "editProfileFooterButton", "engineBadge", "exampleButton",
   "exportDataButton", "favoriteButton", "favoriteCount", "favoritesEmpty", "favoritesList", "fidelityInfoButton", "fidelityLabel", "fidelityRange",
@@ -53,8 +53,8 @@ const ids = [
   "profileFavoriteInput", "profileFavorites", "profileForm", "profileGrid", "profileId", "profileName", "profileNotes", "profileSelect", "profileSelectLabel",
   "profileSwitcher", "profileAllergyInput", "rangeLeaf", "recipeDialog", "recipeDialogContent", "recipeDialogTitle", "recipeText", "recipeUrl", "recheckAiButton",
   "resetDataButton", "resultCard", "resultEyebrow", "resultSummary", "resultTitle", "servingsLabel", "servingsSelect", "sourceNotice", "sourceNoticeMeta",
-  "sourceNoticeTitle", "stepList", "textPanel", "textTab", "tipList", "toastRegion", "warningDetails", "warningList", "changeList", "activeAvatar",
-  "activeProfileName", "addProfileButton",
+  "sourceNoticeTitle", "stepList", "textPanel", "textTab", "tipList", "toastRegion", "warningDetails", "warningList", "changeList", "changeEmpty",
+  "quantityChangeList", "quantityChangeEmpty", "activeAvatar", "activeProfileName", "addProfileButton",
 ];
 
 const el = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
@@ -70,7 +70,6 @@ const state = {
   importedSourceUrl: "",
   aiAvailable: false,
   aiEnabled: localStorage.getItem(STORAGE.aiEnabled) === "true",
-  aiModel: "",
   selectedHistoryId: null,
   reduceMotion: localStorage.getItem(STORAGE.reduceMotion) === "true",
 };
@@ -148,8 +147,7 @@ function bindEvents() {
   el.addProfileButton.addEventListener("click", () => openProfileDialog());
   el.profileForm.addEventListener("submit", saveProfileFromDialog);
 
-  el.aiQuickButton.addEventListener("click", toggleAi);
-  el.aiMiniToggle.addEventListener("click", toggleAi);
+  el.aiInlineToggle.addEventListener("click", toggleAi);
   el.aiSettingsButton.addEventListener("click", toggleAi);
   el.recheckAiButton.addEventListener("click", checkAiStatus);
 
@@ -227,7 +225,7 @@ function sanitizeHistoryEntry(value) {
     id: cleanText(value.id, 100) || makeId("recipe"),
     createdAt: Number.isFinite(Number(value.createdAt)) ? Number(value.createdAt) : Date.now(),
     profileName: cleanText(value.profileName, 40) || "Profil",
-    engine: value.engine === "grok" ? "grok" : "fallback",
+    engine: value.engine === "ai" ? "ai" : "fallback",
     favorite: Boolean(value.favorite),
     recipe,
   };
@@ -415,8 +413,8 @@ async function convertRecipe() {
   const profile = activeProfile();
   const mode = Number(el.dietRange.value) === 1 ? "vegan" : "vegetarian";
   const useAi = state.aiAvailable && state.aiEnabled;
-  setBusy(el.convertButton, true, useAi ? "Grok verwandelt …" : "RePlant verwandelt …");
-  setStatus(useAi ? "Grok analysiert Geschmack, Textur und Zubereitung …" : "Grundmodus ersetzt die wichtigsten Tierprodukte …");
+  setBusy(el.convertButton, true, useAi ? "AI verwandelt …" : "RePlant verwandelt …");
+  setStatus(useAi ? "AI analysiert Geschmack, Textur und Zubereitung …" : "Grundmodus ersetzt die wichtigsten Tierprodukte …");
 
   try {
     const data = await requestJson("/api/convert", {
@@ -440,7 +438,7 @@ async function convertRecipe() {
       id: makeId("recipe"),
       createdAt: Date.now(),
       profileName: profile.name,
-      engine: data.engine === "grok" ? "grok" : "fallback",
+      engine: data.engine === "ai" ? "ai" : "fallback",
       favorite: false,
       recipe,
     };
@@ -450,7 +448,7 @@ async function convertRecipe() {
     renderResult(entry);
     renderHistory();
     renderFavorites();
-    setStatus(data.engine === "grok" ? "AI-Umwandlung abgeschlossen." : "Grundversion abgeschlossen – Angaben bitte kurz prüfen.");
+    setStatus(data.engine === "ai" ? "AI-Umwandlung abgeschlossen." : "Grundversion abgeschlossen – Angaben bitte kurz prüfen.");
     el.resultCard.hidden = false;
     requestAnimationFrame(() => el.resultCard.scrollIntoView({ behavior: state.reduceMotion ? "auto" : "smooth", block: "start" }));
   } catch (error) {
@@ -477,6 +475,11 @@ function normalizeRecipe(value) {
     to: cleanText(entry?.to, 200),
     reason: cleanText(entry?.reason, 300),
   })).filter((entry) => entry.from || entry.to).slice(0, 30) : [];
+  const quantityChanges = Array.isArray(source.quantityChanges) ? source.quantityChanges.map((entry) => ({
+    ingredient: cleanText(entry?.ingredient, 240),
+    from: cleanText(entry?.from, 60),
+    to: cleanText(entry?.to, 60),
+  })).filter((entry) => entry.ingredient && entry.from && entry.to && entry.from !== entry.to).slice(0, 100) : [];
   return {
     title: cleanText(source.title, 180),
     summary: cleanText(source.summary, 500),
@@ -486,6 +489,7 @@ function normalizeRecipe(value) {
     ingredients,
     steps,
     changes,
+    quantityChanges,
     warnings: cleanList(source.warnings, 30),
     tips: cleanList(source.tips, 30),
     sourceUrl: cleanText(source.sourceUrl, 2048),
@@ -498,7 +502,7 @@ function renderResult(entry) {
   el.resultTitle.textContent = recipe.title;
   el.resultSummary.textContent = recipe.summary || `Für ${recipe.servings} ${recipe.servings === 1 ? "Portion" : "Portionen"}.`;
   el.fidelityScore.textContent = String(recipe.fidelityScore);
-  el.engineBadge.textContent = entry.engine === "grok" ? "Grok AI" : "Regelbasierter Grundmodus";
+  el.engineBadge.textContent = entry.engine === "ai" ? "RePlant AI" : "Regelbasierter Grundmodus";
   el.favoriteButton.setAttribute("aria-pressed", String(entry.favorite));
   el.favoriteButton.lastChild.textContent = entry.favorite ? " Gespeichert" : " Favorit";
 
@@ -537,6 +541,24 @@ function renderResult(entry) {
     row.append(from, arrow, to);
     return row;
   }));
+  el.changeEmpty.hidden = recipe.changes.length > 0;
+
+  el.quantityChangeList.replaceChildren(...recipe.quantityChanges.map((change) => {
+    const row = document.createElement("div");
+    row.className = "quantity-change-item";
+    const ingredient = document.createElement("strong");
+    ingredient.textContent = change.ingredient;
+    const from = document.createElement("span");
+    from.className = "quantity-from";
+    from.textContent = change.from;
+    const arrow = document.createElement("span");
+    arrow.textContent = "→";
+    const to = document.createElement("span");
+    to.textContent = change.to;
+    row.append(ingredient, from, arrow, to);
+    return row;
+  }));
+  el.quantityChangeEmpty.hidden = recipe.quantityChanges.length > 0;
 
   el.warningList.replaceChildren(...recipe.warnings.map(makeListItem));
   el.tipList.replaceChildren(...recipe.tips.map(makeListItem));
@@ -834,7 +856,7 @@ function makeCollectionCard(entry) {
   summary.textContent = entry.recipe.summary || `${entry.recipe.servings} Portionen`;
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  for (const value of [entry.recipe.mode === "vegan" ? "Vegan" : "Vegetarisch", entry.engine === "grok" ? "Grok AI" : "Grundmodus", `${entry.recipe.fidelityScore}% nah`]) {
+  for (const value of [entry.recipe.mode === "vegan" ? "Vegan" : "Vegetarisch", entry.engine === "ai" ? "RePlant AI" : "Grundmodus", `${entry.recipe.fidelityScore}% nah`]) {
     const badge = document.createElement("span");
     badge.textContent = value;
     meta.append(badge);
@@ -881,7 +903,7 @@ function makeRecipeDialogContent(entry) {
   const wrapper = document.createElement("div");
   const meta = document.createElement("p");
   meta.className = "subtle-note";
-  meta.textContent = `${entry.recipe.mode === "vegan" ? "Vegan" : "Vegetarisch"} · ${entry.recipe.servings} Portionen · ${entry.engine === "grok" ? "Grok AI" : "Grundmodus"}`;
+  meta.textContent = `${entry.recipe.mode === "vegan" ? "Vegan" : "Vegetarisch"} · ${entry.recipe.servings} Portionen · ${entry.engine === "ai" ? "RePlant AI" : "Grundmodus"}`;
   const ingredientsTitle = document.createElement("h3");
   ingredientsTitle.textContent = "Zutaten";
   const ingredients = document.createElement("ul");
@@ -955,15 +977,13 @@ function switchView(view) {
 }
 
 async function checkAiStatus() {
-  el.aiQuickMeta.textContent = "Status wird geprüft";
   try {
     const data = await requestJson("/api/health", { method: "GET" }, 8000);
     state.aiAvailable = Boolean(data.aiAvailable);
-    state.aiModel = cleanText(data.model, 120);
     if (!state.aiAvailable) state.aiEnabled = false;
     localStorage.setItem(STORAGE.aiEnabled, String(state.aiEnabled));
     renderAiState();
-    if (el.aiDialog.open && state.aiAvailable) showToast("Grok ist jetzt bereit.");
+    if (el.aiDialog.open && state.aiAvailable) showToast("AI ist jetzt bereit.");
   } catch {
     state.aiAvailable = false;
     state.aiEnabled = false;
@@ -979,31 +999,23 @@ function toggleAi() {
   state.aiEnabled = !state.aiEnabled;
   localStorage.setItem(STORAGE.aiEnabled, String(state.aiEnabled));
   renderAiState();
-  showToast(state.aiEnabled ? "Grok AI ist für neue Umwandlungen aktiv." : "Grok AI wurde ausgeschaltet.");
+  showToast(state.aiEnabled ? "AI ist für neue Umwandlungen aktiv." : "AI wurde ausgeschaltet.");
 }
 
 function renderAiState() {
   const enabled = state.aiAvailable && state.aiEnabled;
-  el.aiQuickButton.setAttribute("aria-pressed", String(enabled));
-  el.aiMiniToggle.setAttribute("aria-checked", String(enabled));
+  el.aiInlineToggle.setAttribute("aria-checked", String(enabled));
+  el.aiInlineToggle.setAttribute("aria-label", enabled ? "AI-Modus ausschalten" : "AI-Modus aktivieren");
+  el.aiInlineToggle.classList.toggle("is-unavailable", !state.aiAvailable);
   if (enabled) {
-    el.aiQuickLabel.textContent = "AI aktiv";
-    el.aiQuickMeta.textContent = state.aiModel || "Grok verbunden";
-    el.aiMiniText.textContent = state.aiModel || "Grok verbunden";
-    el.aiSettingsStatus.textContent = `Aktiv · ${state.aiModel || "Grok"}`;
+    el.aiSettingsStatus.textContent = "Aktiv";
     el.aiSettingsStatus.className = "status-pill is-on";
     el.aiSettingsButton.textContent = "AI ausschalten";
   } else if (state.aiAvailable) {
-    el.aiQuickLabel.textContent = "AI aktivieren";
-    el.aiQuickMeta.textContent = "Grok ist bereit";
-    el.aiMiniText.textContent = "Bereit, derzeit aus";
-    el.aiSettingsStatus.textContent = `Bereit · ${state.aiModel || "Grok"}`;
+    el.aiSettingsStatus.textContent = "Bereit, derzeit aus";
     el.aiSettingsStatus.className = "status-pill";
     el.aiSettingsButton.textContent = "AI aktivieren";
   } else {
-    el.aiQuickLabel.textContent = "AI aktivieren";
-    el.aiQuickMeta.textContent = "Grok einrichten";
-    el.aiMiniText.textContent = "API-Key noch nicht verbunden";
     el.aiSettingsStatus.textContent = "Noch nicht eingerichtet";
     el.aiSettingsStatus.className = "status-pill is-off";
     el.aiSettingsButton.textContent = "Einrichtung anzeigen";
@@ -1013,7 +1025,7 @@ function renderAiState() {
 function exportData() {
   const payload = {
     type: "replant-backup",
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     profiles: state.profiles,
     activeProfileId: state.activeProfileId,

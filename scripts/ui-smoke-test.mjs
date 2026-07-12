@@ -130,12 +130,16 @@ try {
     title: document.title,
     linkFirst: document.querySelector('#linkTab').classList.contains('is-active'),
     logoLoaded: document.querySelector('.wordmark').complete && document.querySelector('.wordmark').naturalWidth > 100,
-    overflow: document.documentElement.scrollWidth > window.innerWidth + 1
+    overflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+    inlineAi: Boolean(document.querySelector('#aiInlineToggle')),
+    removedQuickAi: !document.querySelector('#aiQuickButton'),
+    removedMiniAi: !document.querySelector('#aiMiniCard')
   }))()`);
   if (initial.title !== "RePlant – Same taste. Better planet.") throw new Error("Unexpected title");
   if (!initial.linkFirst) throw new Error("Link input is not the first active option");
   if (!initial.logoLoaded) throw new Error("Wordmark did not load");
   if (initial.overflow) throw new Error("Desktop horizontal overflow");
+  if (!initial.inlineAi || !initial.removedQuickAi || !initial.removedMiniAi) throw new Error("AI control layout was not updated");
 
   await evaluate(client, `(() => {
     document.querySelector('#textTab').click();
@@ -150,13 +154,16 @@ try {
     engine: document.querySelector('#engineBadge')?.textContent,
     ingredients: document.querySelector('#ingredientList')?.textContent,
     steps: document.querySelectorAll('#stepList > li').length,
-    history: JSON.parse(localStorage.getItem('replant.history.v3') || '[]').length,
+    substitutions: document.querySelectorAll('#changeList .change-item').length,
+    quantityChanges: document.querySelectorAll('#quantityChangeList .quantity-change-item').length,
+    history: JSON.parse(localStorage.getItem('replant.history.v4') || '[]').length,
     overflow: document.documentElement.scrollWidth > window.innerWidth + 1
   }))()`);
   if (!/vegane Variante/u.test(result.title)) throw new Error("Vegan result title missing");
   if (!/Grundmodus/u.test(result.engine)) throw new Error("Fallback badge missing");
   if (/Pancetta|Speck|Parmesan/u.test(result.ingredients)) throw new Error("Animal ingredients remained");
   if (result.steps < 4 || result.history < 1) throw new Error("Result or local history incomplete");
+  if (result.substitutions < 3 || result.quantityChanges < 5) throw new Error("Separated change groups are incomplete");
   if (result.overflow) throw new Error("Desktop result overflow");
   await screenshot(client, "replant-desktop-result.png");
 
@@ -189,6 +196,8 @@ try {
   console.log("- Link-Eingabe ist beim Start aktiv");
   console.log("- RePlant-Logo wurde geladen");
   console.log("- Veganes Beispielrezept wurde umgewandelt");
+  console.log("- AI-Schalter ist in die Hauptaktion integriert");
+  console.log("- Produktwechsel und Mengenänderungen werden getrennt angezeigt");
   console.log("- Verlauf und neues Profil wurden lokal gespeichert");
   console.log("- Desktop 1440 x 1050 ohne horizontalen Überlauf");
   console.log("- Mobile 390 x 844 ohne horizontalen Überlauf");

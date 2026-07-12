@@ -82,13 +82,6 @@
             <img src="/assets/replant-wordmark.png" alt="RePlant" class="wordmark">
             <p>SAME TASTE. BETTER PLANET.</p>
           </div>
-          <button class="ai-quick-button" id="aiQuickButton" type="button" aria-pressed="false">
-            <span class="ai-orbit" aria-hidden="true"><span></span></span>
-            <span class="ai-quick-copy">
-              <strong id="aiQuickLabel">AI aktivieren</strong>
-              <small id="aiQuickMeta">Grok verbinden</small>
-            </span>
-          </button>
         </div>
 
         <h1 class="sr-only" id="startHeading">Rezept verwandeln</h1>
@@ -177,12 +170,18 @@
                 <div class="range-labels" aria-hidden="true"><span>Sehr nah</span><span id="fidelityLabel">Ausgewogen</span><span>Kreativ</span></div>
               </div>
 
-              <button class="primary-action" id="convertButton" type="button">
-                <span>Rezept verwandeln</span>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.2 4.2L17 8l-3.8 1.8L12 14l-1.2-4.2L7 8l3.8-1.8L12 2ZM19 13l.7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7L19 13ZM5 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg>
-                <span class="button-shine" aria-hidden="true"></span>
-              </button>
-              <p class="conversion-status" id="conversionStatus" role="status" aria-live="polite"></p>
+              <div class="conversion-action-shell">
+                <button class="primary-action" id="convertButton" type="button">
+                  <span>Rezept verwandeln</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.2 4.2L17 8l-3.8 1.8L12 14l-1.2-4.2L7 8l3.8-1.8L12 2ZM19 13l.7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7L19 13ZM5 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg>
+                  <span class="button-shine" aria-hidden="true"></span>
+                </button>
+                <button class="inline-ai-toggle" id="aiInlineToggle" type="button" role="switch" aria-checked="false" aria-label="AI-Modus aktivieren">
+                  <span class="inline-ai-label">AI</span>
+                  <span class="inline-ai-track" aria-hidden="true"><span class="inline-ai-thumb"></span></span>
+                </button>
+              </div>
+              <p class="sr-only" id="conversionStatus" role="status" aria-live="polite"></p>
             </section>
 
             <section class="process-strip" aria-label="So funktioniert RePlant">
@@ -241,7 +240,24 @@
               <div class="result-details">
                 <details open>
                   <summary>Was wurde verändert?</summary>
-                  <div class="change-list" id="changeList"></div>
+                  <div class="change-groups">
+                    <section class="change-group" aria-labelledby="substitutionHeading">
+                      <div class="change-group-heading">
+                        <span class="change-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3M18 7l2 2-2 2M6 17l-2-2 2-2"/></svg></span>
+                        <div><h4 id="substitutionHeading">Ersetzte Produkte</h4><p>Tierische oder ungeeignete Zutaten wurden ausgetauscht.</p></div>
+                      </div>
+                      <div class="change-list" id="changeList"></div>
+                      <p class="change-empty" id="changeEmpty" hidden>Es mussten keine Produkte ersetzt werden.</p>
+                    </section>
+                    <section class="change-group" aria-labelledby="quantityHeading">
+                      <div class="change-group-heading">
+                        <span class="change-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M7 4v6M17 4v6M5 14h14M8 11v6M16 11v6M6 20h12"/></svg></span>
+                        <div><h4 id="quantityHeading">Angepasste Mengen</h4><p>Mengenänderungen durch die gewählte Portionszahl.</p></div>
+                      </div>
+                      <div class="quantity-change-list" id="quantityChangeList"></div>
+                      <p class="change-empty" id="quantityChangeEmpty" hidden>Die Mengen entsprechen bereits der gewählten Portionszahl.</p>
+                    </section>
+                  </div>
                 </details>
                 <details id="warningDetails">
                   <summary>Allergie- und Sicherheitshinweise</summary>
@@ -290,11 +306,6 @@
               <button class="soft-button full-width" id="editProfileFooterButton" type="button">Profil bearbeiten</button>
             </section>
 
-            <section class="ai-mini-card surface" id="aiMiniCard">
-              <div class="ai-mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 1.2 4.2L17 8l-3.8 1.8L12 14l-1.2-4.2L7 8l3.8-1.8L12 2ZM19 13l.7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7L19 13Z"/></svg></div>
-              <div><strong>RePlant AI</strong><small id="aiMiniText">Optional mit Grok</small></div>
-              <button class="mini-switch" id="aiMiniToggle" type="button" role="switch" aria-checked="false" aria-label="AI-Modus umschalten"><span></span></button>
-            </section>
           </aside>
         </div>
       </section>
@@ -321,7 +332,7 @@
         <div class="settings-grid">
           <section class="settings-card surface">
             <div class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.2 4.2L17 8l-3.8 1.8L12 14l-1.2-4.2L7 8l3.8-1.8L12 2ZM19 13l.7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7L19 13Z"/></svg></div>
-            <div class="settings-copy"><h2>RePlant AI</h2><p>Nutze deinen Grok API-Key serverseitig für präzisere Umwandlungen.</p><span class="status-pill" id="aiSettingsStatus">Status wird geprüft …</span></div>
+            <div class="settings-copy"><h2>RePlant AI</h2><p>Nutze deinen AI-API-Key serverseitig für präzisere Umwandlungen.</p><span class="status-pill" id="aiSettingsStatus">Status wird geprüft …</span></div>
             <button class="soft-button" id="aiSettingsButton" type="button">AI aktivieren</button>
           </section>
           <section class="settings-card surface">
@@ -373,12 +384,12 @@
 
   <dialog class="modal" id="aiDialog" aria-labelledby="aiDialogTitle">
     <div class="modal-card compact-modal">
-      <div class="modal-heading"><div><span class="eyebrow">Optionaler AI-Modus</span><h2 id="aiDialogTitle">Grok sicher verbinden</h2></div><button class="icon-button" type="button" data-close-dialog="aiDialog" aria-label="Schließen">×</button></div>
-      <div class="ai-setup-visual" aria-hidden="true"><span>RePlant</span><b>→</b><span>Netlify Function</span><b>→</b><span>Grok API</span></div>
+      <div class="modal-heading"><div><span class="eyebrow">Optionaler AI-Modus</span><h2 id="aiDialogTitle">AI sicher verbinden</h2></div><button class="icon-button" type="button" data-close-dialog="aiDialog" aria-label="Schließen">×</button></div>
+      <div class="ai-setup-visual" aria-hidden="true"><span>RePlant</span><b>→</b><span>Netlify Function</span><b>→</b><span>AI API</span></div>
       <p>Dein API-Key gehört ausschließlich als geheime Umgebungsvariable zu Netlify. Trage ihn niemals in diese Website oder in eine öffentliche GitHub-Datei ein.</p>
       <ol class="setup-list">
         <li><span>1</span><div><strong>Netlify öffnen</strong><p>Dein RePlant-Projekt auswählen.</p></div></li>
-        <li><span>2</span><div><strong>Environment variable anlegen</strong><p>Name: <code>XAI_API_KEY</code>, Wert: dein Grok API-Key.</p></div></li>
+        <li><span>2</span><div><strong>Environment variable anlegen</strong><p>Name: <code>XAI_API_KEY</code>, Wert: dein AI-API-Key.</p></div></li>
         <li><span>3</span><div><strong>Neu bereitstellen</strong><p>Unter Deploys einen neuen Production Deploy auslösen.</p></div></li>
       </ol>
       <p class="subtle-note">Optional kannst du <code>XAI_MODEL</code> festlegen. Ohne Angabe verwendet das Projekt den in der Function definierten Standard.</p>

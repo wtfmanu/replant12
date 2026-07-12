@@ -300,6 +300,22 @@ function scaleAmount(amount, factor) {
   return `${match[1] || ""}${formatNumber((first + second) * factor)}${match[4] || ""}`.trim();
 }
 
+export function deriveQuantityChanges(recipeText, targetServings) {
+  const parsed = parseRecipeText(cleanString(recipeText, 50_000));
+  const servings = clampInt(targetServings, 1, 24, 2);
+  if (!parsed.servings || parsed.servings <= 0 || parsed.servings === servings) return [];
+  const factor = servings / parsed.servings;
+  return parsed.ingredients.map((entry) => {
+    const scaled = scaleAmount(entry.amount, factor);
+    if (!entry.amount || !scaled || scaled === entry.amount) return null;
+    return {
+      ingredient: cleanString(entry.item, 240),
+      from: cleanString(entry.amount, 60),
+      to: cleanString(scaled, 60),
+    };
+  }).filter(Boolean).slice(0, 100);
+}
+
 function allergenWarnings(profile, ingredients) {
   const joined = normalizeSearch(ingredients.map((entry) => `${entry.item} ${entry.note}`).join(" "));
   const warnings = ["Keine medizinische Freigabe: Prüfe bei Allergien immer Zutatenlisten, Spurenhinweise und Kreuzkontamination der verwendeten Produkte."];
@@ -325,6 +341,11 @@ export function normalizeConvertedRecipe(value, fallbackSourceUrl = "") {
     to: cleanString(entry?.to, 200),
     reason: cleanString(entry?.reason, 300),
   })).filter((entry) => entry.from || entry.to).slice(0, 30) : [];
+  const quantityChanges = Array.isArray(source.quantityChanges) ? source.quantityChanges.map((entry) => ({
+    ingredient: cleanString(entry?.ingredient, 240),
+    from: cleanString(entry?.from, 60),
+    to: cleanString(entry?.to, 60),
+  })).filter((entry) => entry.ingredient && entry.from && entry.to && entry.from !== entry.to).slice(0, 100) : [];
   return {
     title: cleanString(source.title, 180),
     summary: cleanString(source.summary, 500),
@@ -334,6 +355,7 @@ export function normalizeConvertedRecipe(value, fallbackSourceUrl = "") {
     ingredients,
     steps,
     changes,
+    quantityChanges,
     warnings: cleanList(source.warnings, 30, 500),
     tips: cleanList(source.tips, 30, 500),
     sourceUrl: cleanString(fallbackSourceUrl, 2048),
@@ -347,6 +369,7 @@ export function convertRecipeFallback(input) {
   const targetServings = clampInt(input.servings, 1, 24, 2);
   const parsed = parseRecipeText(cleanString(input.recipeText, 50_000));
   const scaleFactor = parsed.servings && parsed.servings > 0 ? targetServings / parsed.servings : 1;
+  const quantityChanges = deriveQuantityChanges(input.recipeText, targetServings);
   const changes = [];
   const ingredients = parsed.ingredients.map((entry) => {
     const replacement = replaceItem(entry.item, mode, profile);
@@ -382,6 +405,7 @@ export function convertRecipeFallback(input) {
     ingredients,
     steps,
     changes,
+    quantityChanges,
     warnings,
     tips,
   }, input.sourceUrl);

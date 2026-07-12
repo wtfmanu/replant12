@@ -44,6 +44,8 @@ test("vegane Carbonara berücksichtigt eine Soja-Allergie", () => {
   assert.match(text, /aquafaba|eiersatz/u);
   assert.equal(result.ingredients[0].amount, "200 g");
   assert.ok(result.changes.length >= 3);
+  assert.ok(result.quantityChanges.length >= 5);
+  assert.ok(result.quantityChanges.some((change) => change.ingredient === "Spaghetti" && change.from === "400 g" && change.to === "200 g"));
   assert.ok(result.warnings.some((warning) => /keine medizinische freigabe/i.test(warning)));
 });
 

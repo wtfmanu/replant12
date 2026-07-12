@@ -1,6 +1,6 @@
 import { AppError, clampInt, cleanList, cleanString, enforceSameOrigin, errorResponse, jsonResponse, methodErrorResponse, readJson, requireMethod } from "./_shared/http.mjs";
 import { convertRecipeFallback } from "./_shared/fallback-converter.mjs";
-import { convertRecipeWithGrok } from "./_shared/grok-converter.mjs";
+import { convertRecipeWithAi } from "./_shared/ai-converter.mjs";
 
 function sanitizeProfile(value = {}) {
   return {
@@ -34,10 +34,10 @@ export default async function handler(request) {
 
     if (body.useAi === true && process.env.XAI_API_KEY?.trim()) {
       try {
-        const result = await convertRecipeWithGrok(input);
-        return jsonResponse({ ok: true, engine: "grok", model: result.model, recipe: result.recipe });
+        const result = await convertRecipeWithAi(input);
+        return jsonResponse({ ok: true, engine: "ai", model: result.model, recipe: result.recipe });
       } catch (aiError) {
-        console.error("Grok conversion failed; using fallback:", aiError?.code || aiError?.message);
+        console.error("AI conversion failed; using fallback:", aiError?.code || aiError?.message);
         const recipe = convertRecipeFallback(input);
         recipe.warnings.unshift("Die AI-Umwandlung war vorübergehend nicht verfügbar. RePlant hat deshalb den regelbasierten Grundmodus verwendet.");
         return jsonResponse({ ok: true, engine: "fallback", aiFallback: true, recipe });
